@@ -1,45 +1,31 @@
-#include "Shader.h"
+#include "graphics/Shader.h"
+#include "graphics/window/Window.h"
+#include "graphics/buffers/Buffer.h"
+#include "graphics/buffers/VertexArray.h"
 
 #include <iostream>
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
-void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
-void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 int main() {
-	glfwInit();
-
-	GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
-
-	float vertices[] = {
+		float vertices[] = {
 		 0.0f,   0.5f,  0.0f,
-		 0.5f,  -0.5f,  0.0f,
-		-0.5f,  -0.5f,  0.0f
+		-0.5f,  -0.5f,  0.0f,
+		 0.5f,  -0.5f,  0.0f
 	};
 
-	if (window == NULL) {
-		std::cout << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		return -1;
-	}
+	GoL::Window window(800, 600, "Test");
 
-	glfwMakeContextCurrent(window);
 	gladLoadGL();
 
-	Shader shader("res/shaders/TestVertexShader.vert", "res/shaders/TestFragmentShader.frag");
+	GoL::Shader shader("res/shaders/TestVertexShader.vert", "res/shaders/TestFragmentShader.frag");
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
 
-	glViewport(0, 0, 800, 600);
-	glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
-	glfwSetKeyCallback(window, KeyCallback);
-
 	GLuint VBO;
-	GLuint VAO = 0;
+	GLuint VAO;
 
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
@@ -52,27 +38,20 @@ int main() {
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-	while (!glfwWindowShouldClose(window)) {
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	while (!window.Closed()) {
+		window.Clear();
 
 		shader.Use();
 
+		float timeValue = glfwGetTime();
+		float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+		int vertexColorLocation = glGetUniformLocation(shader.ID, "ourColor");
+		glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+		window.Update();
 	}
 
-	glfwTerminate();
 	return 0;
-}
-
-void FramebufferSizeCallback(GLFWwindow* window, int width, int height) {
-	glViewport(0, 0, width, height);
-}
-
-void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-		glfwSetWindowShouldClose(window, GLFW_TRUE);
-	}
 }
